@@ -1,0 +1,8 @@
+---
+# tasks file for create_user
+- name: Create user.
+  user:
+    name: "{{ usern }}"
+    state: present
+    password: "{{ passd | password_hash('sha512') }}"
+    comment: "{{ usern }}"
