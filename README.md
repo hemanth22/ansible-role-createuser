@@ -3,7 +3,7 @@ Role Name: Create_user
 
 This role creates user and updates password.  
 
-[![Build Status](https://travis-ci.org/hemanth22/ansible-role-create_user.svg?branch=master)](https://travis-ci.org/hemanth22/ansible-role-create_user)
+[![Build Status](https://travis-ci.org/hemanth22/ansible-role-createuser.svg?branch=master)](https://travis-ci.org/hemanth22/ansible-role-createuser)
 
 Requirements
 ------------
