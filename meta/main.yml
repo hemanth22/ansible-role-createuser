@@ -1,6 +1,6 @@
 ---
 galaxy_info:
-  role_name: create_user
+  role_name: createuser
   author: hemanth22
   description: This role creates user and updates password
   license: GPLv3
@@ -10,7 +10,7 @@ galaxy_info:
       versions:
         - 7
   galaxy_tags:
-    - create_user
+    - createuser
     - centos
 
 dependencies: []
