@@ -1,8 +1,10 @@
 ---
 # tasks file for create_user
 - name: Create user.
-  user:
+  ansible.builtin.user:
     name: "{{ usern }}"
+    shell: /bin/bash
     state: present
+    create_home: true
     password: "{{ passd | password_hash('sha512') }}"
     comment: "{{ usern }}"
