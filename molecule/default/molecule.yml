@@ -18,5 +18,5 @@ platforms:
 provisioner:
   name: ansible
   playbooks:
-    prepare: ${MOLECULE_PLAYBOOK:-prepare.yml}
+    prepare: molecule/default/prepare.yml
     converge: ${MOLECULE_PLAYBOOK:-converge.yml}
