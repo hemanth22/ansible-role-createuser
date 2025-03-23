@@ -105,3 +105,4 @@ websockets==12.0
 yamllint==1.35.1
 yarl==1.9.4
 youtube-transcript-api==0.6.2
+passlib==1.7.4
