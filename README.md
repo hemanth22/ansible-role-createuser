@@ -1,4 +1,4 @@
-Role Name: Create_user
+Role Name: createuser
 =========
 
 This role creates user and updates password.  
