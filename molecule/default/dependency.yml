@@ -1,0 +1,7 @@
+- name: Install Python dependencies
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Install dependencies from requirements.txt
+      ansible.builtin.pip:
+        requirements: requirements.txt
