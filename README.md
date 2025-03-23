@@ -7,7 +7,7 @@ This role creates user and updates password.
 Requirements
 ------------
 
--[x] passlib.  
+- [x] passlib.  
 
 __How to install :__ install using command `pip install passlib` for password updation
 
