@@ -3,7 +3,6 @@ role_name_check: 1
 dependency:
   name: galaxy
   options:
-    playbook: molecule/default/dependency.yml
     ignore-errors: true
 driver:
   name: docker
