@@ -1,4 +1,15 @@
 ---
+- name: Check if group exists
+  ansible.builtin.goup: getent group "{{ usern }}"
+  register: group_exists
+  failed_when: false
+  changed_when: false
+
+- name: Ensure to create group
+  ansible.builtin.group:
+    name: "{{ usern }}"
+    state: present
+
 - name: Check if user exists
   ansible.builtin.command: id "{{ usern }}"
   register: user_exists
@@ -14,4 +25,4 @@
     create_home: true
     password: "{{ usern | password_hash('sha512') }}"
     comment: "{{ usern }}"
-  when: user_exists.rc != 0
+  when: user_exists.rc != 0 and group_exists.rc != 0
