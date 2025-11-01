@@ -1,6 +1,6 @@
 ---
 - name: Check if group exists
-  ansible.builtin.goup: getent group "{{ usern }}"
+  ansible.builtin.shell: getent group "{{ usern }}"
   register: group_exists
   failed_when: false
   changed_when: false
