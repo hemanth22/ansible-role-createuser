@@ -1,5 +1,4 @@
 ---
-# tasks file for create_user
 - name: Check if user exists
   ansible.builtin.command: id "{{ usern }}"
   register: user_exists
@@ -9,9 +8,10 @@
 - name: Create user.
   ansible.builtin.user:
     name: "{{ usern }}"
+    group: "{{ usern }}"
     shell: /bin/bash
     state: present
     create_home: true
-    password: "{{ passd | password_hash('sha512') }}"
+    password: "{{ usern | password_hash('sha512') }}"
     comment: "{{ usern }}"
   when: user_exists.rc != 0
