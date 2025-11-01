@@ -4,7 +4,7 @@ name: CI
   pull_request:
   push:
     branches:
-      - master
+      - main
 
 defaults:
   run:
@@ -40,6 +40,7 @@ jobs:
       matrix:
         distro:
           - rockylinux9
+          - rockylinux8
 
     steps:
       - name: Check out the codebase.
@@ -55,9 +56,24 @@ jobs:
       - name: Install test dependencies.
         run: pip3 install ansible molecule molecule-plugins[docker] docker
 
+      # See: https://github.com/geerlingguy/ansible-role-mysql/issues/422
+      - name: Disable AppArmor on Debian.
+        run: |
+            set -x
+            sudo apt-get install apparmor-profiles
+            sudo ln -s /etc/apparmor.d/usr.sbin.mysqld /etc/apparmor.d/disable/
+            sudo apparmor_parser -R /etc/apparmor.d/usr.sbin.mysqld
+        if: ${{ startsWith(matrix.distro, 'debian') }}
+
       - name: Run Molecule tests.
-        run: molecule test
+        run: molecule test 2>&1 | tee /tmp/molecule-test.log
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
           MOLECULE_DISTRO: ${{ matrix.distro }}
+
+      - name: Upload Molecule test logs as artifact
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: molecule-test-logs-${{ matrix.distro }}
+          path: /tmp/molecule-test.log
