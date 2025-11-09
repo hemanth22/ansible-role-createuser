@@ -25,4 +25,4 @@
     create_home: true
     password: "{{ usern | password_hash('sha512') }}"
     comment: "{{ usern }}"
-  when: user_exists.rc != 0 and group_exists.rc != 0
+  when: user_exists.rc != 0
