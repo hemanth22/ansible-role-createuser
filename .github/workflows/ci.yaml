@@ -14,7 +14,7 @@ run-name: CI (${{ github.event_name }}${{ github.event.client_payload.triggered_
       distros:
         description: 'Comma-separated distros to test'
         type: string
-        default: 'rockylinux9,rockylinux8'
+        default: 'rockylinux9,rockylinux10'
 
   # External webhook trigger (POST /repos/{owner}/{repo}/dispatches)
   repository_dispatch:
