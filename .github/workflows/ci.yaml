@@ -1,10 +1,24 @@
 ---
 name: CI
+run-name: CI (${{ github.event_name }}${{ github.event.client_payload.triggered_by && format(' by {0}', github.event.client_payload.triggered_by) || '' }})
+
 'on':
   pull_request:
   push:
     branches:
       - master
+
+  # Manual / API trigger (UI "Run workflow" button or REST API)
+  workflow_dispatch:
+    inputs:
+      distros:
+        description: 'Comma-separated distros to test'
+        type: string
+        default: 'rockylinux9,rockylinux8'
+
+  # External webhook trigger (POST /repos/{owner}/{repo}/dispatches)
+  repository_dispatch:
+    types: [run-ci]
 
 defaults:
   run:
@@ -12,17 +26,42 @@ defaults:
 
 jobs:
 
+  prepare:
+    name: Prepare matrix
+    runs-on: ubuntu-latest
+    outputs:
+      distros: ${{ steps.set.outputs.distros }}
+    steps:
+      - name: Build distro matrix.
+        id: set
+        working-directory: .
+        env:
+          DISPATCH_DISTROS: ${{ github.event.client_payload.distros }}
+          INPUT_DISTROS: ${{ inputs.distros }}
+        run: |
+          set -euo pipefail
+          raw="${DISPATCH_DISTROS:-${INPUT_DISTROS:-rockylinux9,rockylinux8}}"
+          # Allow only safe distro names (blocks injection via webhook payload)
+          json=$(echo "$raw" | tr ',' '\n' | sed 's/^ *//;s/ *$//' | grep -v '^$' \
+                 | while read -r d; do
+                     [[ "$d" =~ ^[a-z0-9.-]+$ ]] || { echo "Invalid distro: $d" >&2; exit 1; }
+                     echo "$d"
+                   done | jq -R . | jq -cs .)
+          echo "Matrix: $json"
+          echo "distros=$json" >> "$GITHUB_OUTPUT"
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
     steps:
       - name: Check out the codebase.
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: 'hemanth22.createuser'
+          ref: ${{ github.event.client_payload.ref }}
 
       - name: Set up Python 3.
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.x'
 
@@ -35,24 +74,24 @@ jobs:
 
   molecule:
     name: Molecule
+    needs: prepare
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        distro:
-          - rockylinux9
-          - rockylinux8
+        distro: ${{ fromJSON(needs.prepare.outputs.distros) }}
 
     steps:
       - name: Check out the codebase.
         uses: actions/checkout@v5
         with:
           path: 'hemanth22.createuser'
+          ref: ${{ github.event.client_payload.ref }}
 
       - name: Set up Python 3.
         uses: actions/setup-python@v6
         with:
           python-version: '3.13'
-          cache: 'pip'
 
       - name: Install test dependencies.
         run: pip install ansible ansible-core molecule molecule-plugins[docker] docker
@@ -67,13 +106,16 @@ jobs:
         if: ${{ startsWith(matrix.distro, 'debian') }}
 
       - name: Run Molecule tests.
-        run: molecule test 2>&1 | tee /tmp/molecule-test.log
+        run: |
+          set -o pipefail
+          molecule test 2>&1 | tee /tmp/molecule-test.log
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
           MOLECULE_DISTRO: ${{ matrix.distro }}
 
       - name: Upload Molecule test logs as artifact
+        if: always()
         uses: actions/upload-artifact@v4.6.2
         with:
           name: molecule-test-logs-${{ matrix.distro }}
