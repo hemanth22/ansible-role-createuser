@@ -1,0 +1,77 @@
+---
+# This workflow requires a GALAXY_API_KEY secret present in the GitHub
+# repository or organization.
+#
+# Triggers:
+#   - Automatically when a tag is pushed (e.g. `git push origin v1.2.0`).
+#   - Manually from the Actions tab ("Run workflow"), supplying a job name
+#     and the release tag to import.
+#   - By webhook (repository_dispatch), e.g.:
+#       curl -X POST \
+#         -H "Accept: application/vnd.github+json" \
+#         -H "Authorization: Bearer $GITHUB_TOKEN" \
+#         https://api.github.com/repos/OWNER/REPO/dispatches \
+#         -d '{"event_type":"release","client_payload":{"job_name":"Galaxy publish","release_tag":"v1.2.0"}}'
+#
+# See: https://github.com/marketplace/actions/publish-ansible-role-to-galaxy
+# See: https://github.com/ansible/galaxy/issues/46
+
+name: Release
+run-name: >-
+  ${{ inputs.job_name || github.event.client_payload.job_name || 'Release' }} -
+  ${{ inputs.release_tag || github.event.client_payload.release_tag || github.ref_name }}
+
+'on':
+  push:
+    tags:
+      - '*'
+  repository_dispatch:
+    types:
+      - release
+  workflow_dispatch:
+    inputs:
+      job_name:
+        description: 'Name shown for this release run/job'
+        required: false
+        default: 'Release'
+        type: string
+      release_tag:
+        description: 'Existing git tag to release (e.g. v1.2.0)'
+        required: true
+        type: string
+
+defaults:
+  run:
+    working-directory: 'hemanth22.createuser'
+
+jobs:
+
+  release:
+    name: ${{ inputs.job_name || github.event.client_payload.job_name || 'Release' }}
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ inputs.release_tag || github.event.client_payload.release_tag || github.ref_name }}
+    steps:
+      - name: Check out the release tag.
+        uses: actions/checkout@v4
+        with:
+          path: 'hemanth22.createuser'
+          # Fails the run if the tag does not exist.
+          ref: refs/tags/${{ env.RELEASE_TAG }}
+
+      - name: Set up Python 3.
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Ansible.
+        run: pip3 install ansible-core
+
+      - name: Trigger a new import on Galaxy.
+        env:
+          GALAXY_API_KEY: ${{ secrets.GALAXY_API_KEY }}
+          REPO: ${{ github.repository }}
+        run: |
+          echo "Importing ${REPO} at tag ${RELEASE_TAG}"
+          ansible-galaxy role import --api-key "${GALAXY_API_KEY}" \
+            "${REPO%%/*}" "${REPO##*/}"
